@@ -1,8 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+function loadSaved() {
+  try {
+    const saved = localStorage.getItem("counterData");
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+}
 
 function Counter() {
-  const [count, setCount] = useState(0);
-  const [step, setStep] = useState(1);
+  const [saved] = useState(loadSaved);
+  const [count, setCount] = useState(saved.count ?? 0);
+  const [step, setStep] = useState(saved.step ?? 1);
+  const [history, setHistory] = useState(saved.history ?? []);
+
+  useEffect(() => {
+    localStorage.setItem("counterData", JSON.stringify({ count, step, history }));
+  }, [count, step, history]);
+
+  const change = (amount) => {
+    const newCount = count + amount;
+    setCount(newCount);
+    setHistory([...history, newCount]);
+  };
 
   return (
     <>
@@ -19,16 +40,25 @@ function Counter() {
         <br /><br />
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          <button className="subtractBtnTwo" onClick={() => setCount(count - step)}>
-            Decrement by {step}
-          </button>
-          <button className="addBtnTwo" onClick={() => setCount(count + step)}>
-            Increment by {step}
-          </button>
-          <button style={{ backgroundColor: 'red' }} onClick={() => setCount(0)}>
+          <button onClick={() => change(-step)}>Decrement by {step}</button>
+          <button onClick={() => change(step)}>Increment by {step}</button>
+          <button
+            style={{ backgroundColor: 'red' }}
+            onClick={() => {
+              setCount(0);
+              setHistory([]);
+            }}
+          >
             Reset
           </button>
         </div>
+
+        <h3>History</h3>
+        <ul style={{ listStyle: 'none', padding: 0, maxHeight: '150px', overflowY: 'auto' }}>
+          {history.map((value, index) => (
+            <li key={index}>{value}</li>
+          ))}
+        </ul>
       </div>
     </>
   );
